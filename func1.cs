@@ -12,6 +12,9 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Azure.Containers.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using System.Text.Json;
 
 namespace azFunctions
 {
@@ -22,11 +25,49 @@ namespace azFunctions
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            // change the logging mechanism to use the ILogger interface
+            log.LogInformation("C# HTTP trigger function processed a request.");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            log.LogInformation(requestBody);
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            
+            if (data != null && "ping".Equals(data.action.ToString(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new StatusCodeResult(204);
+            }
+            
+            if (data != null && data.request != null && data.target != null)
+            {
+                // get the image and ACR info
+                imageACRInfo image = new imageACRInfo
+                {
+                    Id = data.request.id,
+                    LoginServer = data.request.host,
+                    Action = data.action,
+                    TimeStamp = DateTime.UtcNow,
+                    Image = data.target.repository,
+                    Tag = data.target.tag
+                    //Repository = data.
+                };
+
+                // submit the new object to the queue
+                string connStr = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net";
+                QueueClient queue = new QueueClient(connStr, "imagequeue");
+                string message = System.Text.Json.JsonSerializer.Serialize(image);
+
+                await InsertMessageAsync(queue, message);
+
+                return new OkResult();
+            }
+            return new BadRequestObjectResult("Invalid payload received");
+
+
 
 
             //var acrConnInfo = await GetAcrConnInfoAsync();
 
-            
+
             //ContainerRegistryClientOptions options = new ContainerRegistryClientOptions()
             //{
             //    Retry =
@@ -37,7 +78,7 @@ namespace azFunctions
             //             Mode = RetryMode.Exponential
             //            }  
             //};
-            
+
             //var client = new ContainerRegistryClient(new Uri("https://k8stestacreastus2.azurecr.io"), new DefaultAzureCredential(), options);
             //var repository = "<repository-name>";
 
@@ -51,23 +92,35 @@ namespace azFunctions
 
 
 
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            //log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            //string name = req.Query["name"];
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-
+            //string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            //dynamic data = JsonConvert.DeserializeObject(requestBody);
+            //name = name ?? data?.name;
 
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
 
-            return new OkObjectResult(responseMessage);
+
+            //string responseMessage = string.IsNullOrEmpty(name)
+            //    ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
+            //    : $"Hello, {name}. This HTTP triggered function executed successfully.";
+
+            //return new OkObjectResult(responseMessage);
         }
+
+        static async Task InsertMessageAsync(QueueClient qc, string newMessage)
+        {
+            //if (null != await theQueue.CreateIfNotExistsAsync())
+            //{
+            //    Console.WriteLine("The queue was created.");
+            //}
+
+            await qc.SendMessageAsync(newMessage);
+        }
+
+
 
         //public static async Task<acrConInfo> GetAcrConnInfoAsync()
         //{
