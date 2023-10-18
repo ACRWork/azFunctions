@@ -21,6 +21,8 @@ namespace azFunctions
 {
     public static class acrFunctions
     {
+        private static string queueConStr = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net";
+
         [FunctionName("pushHook")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
@@ -60,8 +62,8 @@ namespace azFunctions
                 };
 
                 // submit the new object to the queue
-                string connStr = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net";
-                QueueClient queue = new QueueClient(connStr, "imagequeue");
+                
+                QueueClient queue = new QueueClient(queueConStr, "imagequeue");
                 string message = System.Text.Json.JsonSerializer.Serialize(imgPsInf);
 
                 await InsertMessageAsync(queue, message);
