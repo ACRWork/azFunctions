@@ -15,10 +15,11 @@ using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using System.Text.Json;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace azFunctions
 {
-    public static class func1
+    public static class acrFunctions
     {
         [FunctionName("func1")]
         public static async Task<IActionResult> Run(
@@ -26,6 +27,7 @@ namespace azFunctions
             ILogger log)
         {
             // change the logging mechanism to use the ILogger interface
+            // add try catch block to catch any exceptions
             log.LogInformation("C# HTTP trigger function processed a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -38,23 +40,29 @@ namespace azFunctions
             }
             
             if (data != null && data.request != null && data.target != null)
-            {
-                // get the image and ACR info
-                imageACRInfo image = new imageACRInfo
-                {
-                    Id = data.request.id,
-                    LoginServer = data.request.host,
-                    Action = data.action,
-                    TimeStamp = DateTime.UtcNow,
-                    Image = data.target.repository,
-                    Tag = data.target.tag
-                    //Repository = data.
+            {               
+
+                ACRImagePushInfo imgPsInf = new ACRImagePushInfo
+                {                    
+                    plID = data.id,
+                    plTimestamp = data.timestamp,
+                    plAction = data.action,
+                    pltgMediaType = data.target.mediaType,
+                    pltgSize = data.target.size,
+                    pltgDigest = data.target.digest,
+                    pltgLength = data.target.length,
+                    pltgRepository = data.target.repository,
+                    pltgTag = data.target.tag,
+                    reqID = data.request.id,
+                    reqHost = data.request.host,
+                    reqMethod = data.request.method,
+                    reqUserAgent = data.request.userAgent
                 };
 
                 // submit the new object to the queue
                 string connStr = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net";
                 QueueClient queue = new QueueClient(connStr, "imagequeue");
-                string message = System.Text.Json.JsonSerializer.Serialize(image);
+                string message = System.Text.Json.JsonSerializer.Serialize(imgPsInf);
 
                 await InsertMessageAsync(queue, message);
 
@@ -121,29 +129,36 @@ namespace azFunctions
         }
 
 
+        [FunctionName("purgeRepository")]
+        public static async Task<IActionResult> purgeRepository(
+            [QueueTrigger("imagequeue")] string queueMessage )
+        {
 
-        //public static async Task<acrConInfo> GetAcrConnInfoAsync()
-        //{
-        //    SecretClientOptions options = new SecretClientOptions()
-        //    {
-        //        Retry = {
-        //                 Delay= TimeSpan.FromSeconds(2),
-        //                 MaxDelay = TimeSpan.FromSeconds(8),
-        //                 MaxRetries = 3,
-        //                 Mode = RetryMode.Exponential
-        //                }  
-        //    };
+            return new OkResult();
+        }
 
-        //    var client = new SecretClient(new Uri("https://kvk8stest.vault.azure.net/"), new DefaultAzureCredential(), options);
+            //public static async Task<acrConInfo> GetAcrConnInfoAsync()
+            //{
+            //    SecretClientOptions options = new SecretClientOptions()
+            //    {
+            //        Retry = {
+            //                 Delay= TimeSpan.FromSeconds(2),
+            //                 MaxDelay = TimeSpan.FromSeconds(8),
+            //                 MaxRetries = 3,
+            //                 Mode = RetryMode.Exponential
+            //                }  
+            //    };
 
-        //    KeyVaultSecret secAcrEP = await client.GetSecretAsync("acr-endpoint");
-        //    KeyVaultSecret secAcrToken = await client.GetSecretAsync("acr-token");            
+            //    var client = new SecretClient(new Uri("https://kvk8stest.vault.azure.net/"), new DefaultAzureCredential(), options);
 
-        //    return new acrConInfo()
-        //    {
-        //        AcrEP = secAcrEP.Value,
-        //        AcrToken = secAcrToken.Value
-        //    };
-        //}
-    }
+            //    KeyVaultSecret secAcrEP = await client.GetSecretAsync("acr-endpoint");
+            //    KeyVaultSecret secAcrToken = await client.GetSecretAsync("acr-token");            
+
+            //    return new acrConInfo()
+            //    {
+            //        AcrEP = secAcrEP.Value,
+            //        AcrToken = secAcrToken.Value
+            //    };
+            //}
+        }
 }
