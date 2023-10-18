@@ -21,7 +21,7 @@ namespace azFunctions
 {
     public static class acrFunctions
     {
-        [FunctionName("func1")]
+        [FunctionName("pushHook")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
@@ -131,9 +131,9 @@ namespace azFunctions
 
         [FunctionName("purgeRepository")]
         public static void purgeRepository(
-            [QueueTrigger("imagequeue")] string queueMessage )
+            [QueueTrigger("imagequeue")] string queueMessage, ILogger log)
         {
-            ACRImagePushInfo aCRImagePushInfo = System.Text.Json.JsonSerializer.Deserialize<ACRImagePushInfo>(queueMessage);
+            //ACRImagePushInfo aCRImagePushInfo = System.Text.Json.JsonSerializer.Deserialize<ACRImagePushInfo>(queueMessage);
             
             
         }
