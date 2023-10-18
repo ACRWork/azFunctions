@@ -130,11 +130,12 @@ namespace azFunctions
 
 
         [FunctionName("purgeRepository")]
-        public static async Task<IActionResult> purgeRepository(
+        public static void purgeRepository(
             [QueueTrigger("imagequeue")] string queueMessage )
         {
-
-            return new OkResult();
+            ACRImagePushInfo aCRImagePushInfo = System.Text.Json.JsonSerializer.Deserialize<ACRImagePushInfo>(queueMessage);
+            
+            
         }
 
             //public static async Task<acrConInfo> GetAcrConnInfoAsync()
