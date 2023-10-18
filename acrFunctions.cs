@@ -135,9 +135,10 @@ namespace azFunctions
         public static void purgeRepository(
             [QueueTrigger("imagequeue", Connection = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net")] string queueMessage, ILogger log)
         {
+            log.LogInformation($"C# Queue trigger function processed: {queueMessage}");
+            int len = queueMessage.Length;
             //ACRImagePushInfo aCRImagePushInfo = System.Text.Json.JsonSerializer.Deserialize<ACRImagePushInfo>(queueMessage);
-            
-            
+                        
         }
 
             //public static async Task<acrConInfo> GetAcrConnInfoAsync()
