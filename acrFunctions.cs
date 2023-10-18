@@ -21,7 +21,7 @@ namespace azFunctions
 {
     public static class acrFunctions
     {
-        private static string queueConStr = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net";
+        private const string queueConStr = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net";
 
         [FunctionName("pushHook")]
         public static async Task<IActionResult> Run(
@@ -133,7 +133,7 @@ namespace azFunctions
 
         [FunctionName("purgeRepository")]
         public static void purgeRepository(
-            [QueueTrigger("imagequeue")] string queueMessage, ILogger log)
+            [QueueTrigger("imagequeue", Connection = "DefaultEndpointsProtocol=https;AccountName=k8teststor;AccountKey=UBo5aA6+AZa5+1A79W8pZ0IhtVJkDkbfMJJ/gKPtl6T5k6fkUUrDx9X/72poW+1Ffz4r1bIQBj7e+ASte/Dkfg==;EndpointSuffix=core.windows.net")] string queueMessage, ILogger log)
         {
             //ACRImagePushInfo aCRImagePushInfo = System.Text.Json.JsonSerializer.Deserialize<ACRImagePushInfo>(queueMessage);
             
