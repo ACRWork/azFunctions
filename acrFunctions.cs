@@ -135,8 +135,16 @@ namespace azFunctions
         public static void purgeRepository(
             [QueueTrigger("imagequeue", Connection = "AzureWebJobsStorage")] string queueMessage, ILogger log)
         {
-            log.LogInformation($"C# Queue trigger function processed: {queueMessage}");
-            int len = queueMessage.Length;
+            try
+            {
+                log.LogInformation($"C# Queue trigger function processed: {queueMessage}");
+                int len = queueMessage.Length;
+            }
+            catch (Exception ex)
+            {
+                log.LogInformation($"C# Queue trigger function threw exception: {ex.Message}");
+            }
+            
             //ACRImagePushInfo aCRImagePushInfo = System.Text.Json.JsonSerializer.Deserialize<ACRImagePushInfo>(queueMessage);
                         
         }
